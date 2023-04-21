@@ -1,23 +1,30 @@
 import {
   Controller,
-  HttpException,
-  HttpStatus,
   Req,
+  Param,
+  Body,
   Get,
   Post,
+  Put,
+  Delete,
   UploadedFile,
   UseInterceptors,
-  Body,
   Logger,
-  Param,
+  ParseFilePipe,
+  MaxFileSizeValidator,
+  FileTypeValidator,
+  ParseFilePipeBuilder,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Product } from './entity/product.entity';
 import { Request } from 'express';
-import CreateCategoryDTO from 'src/category/dto/create-category.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { MulterError, diskStorage } from 'multer';
 import { CreateProductDTO } from './dto/create-product.dto';
+import { UpdateProductDTO } from './dto/update-product.dto';
+import { UpdateResult } from 'typeorm';
 
 @Controller('product')
 export class ProductController {
@@ -26,23 +33,45 @@ export class ProductController {
 
   @Get()
   async getAll(@Req() req: Request): Promise<Product[]> {
-    const builder = await this.productService.queryBuilder('product');
+    const builder = await this.productService
+      .queryBuilder('product')
+      .innerJoinAndSelect('product.cate', 'cate');
+    // this.logger.log(builder.getQuery());
 
     if (req.query.s) {
-      builder.where('product.name LIKE :s', { s: req.query.s });
+      builder.where(`product.name LIKE '%${req.query.s}%'`);
+      // this.logger.log(builder.getQuery());
     }
 
-    const page: number = parseInt(req.query.page as any) || 1;
-    const perPage = 8;
+    if (req.query.sort) {
+      const sort = req.query.sort;
+      const sortArr = sort.toString().split('-');
+      builder.orderBy(sortArr[0], sortArr[1] == 'ASC' ? 'ASC' : 'DESC');
+      // this.logger.log(builder.getQuery());
+    }
+
+    const page: number = parseInt(req.query._page as any) || 1;
+    const perPage: number = parseInt(req.query._limit as any) || 8;
 
     builder.offset((page - 1) * perPage).limit(perPage);
 
-    return builder.getMany();
+    // this.logger.log(builder.getQuery());
+    return await builder.getMany();
   }
 
   @Post(':cateID')
   @UseInterceptors(
     FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (file.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
+          cb(null, true);
+        else {
+          cb(
+            new HttpException('Invalid File Type', HttpStatus.BAD_REQUEST),
+            false,
+          );
+        }
+      },
       storage: diskStorage({
         destination: './src/public/uploads',
         filename(req, file, callback) {
@@ -55,13 +84,58 @@ export class ProductController {
   )
   async postData(
     @Param('cateID') cateID: number,
-    @UploadedFile() image: Express.Multer.File,
+    @UploadedFile(
+      new ParseFilePipe({
+        fileIsRequired: true,
+      }),
+    )
+    image: Express.Multer.File,
     @Body() data: CreateProductDTO,
   ): Promise<Product> {
-    const objData = {
-      ...data,
-      image: image.filename,
-    };
-    return await this.productService.create(cateID, objData);
+    data.image = image.filename;
+    return await this.productService.create(cateID, data);
+  }
+
+  @Put(':id/:cateID')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (file.originalname.match(/^.*\.(jpg|webp|png|jpeg)$/))
+          cb(null, true);
+        else {
+          cb(
+            new HttpException('Invalid File Type', HttpStatus.BAD_REQUEST),
+            false,
+          );
+        }
+      },
+      storage: diskStorage({
+        destination: './src/public/uploads',
+        filename(req, file, callback) {
+          const dateNow = Date.now();
+          const fileName = dateNow + file.originalname;
+          callback(null, fileName);
+        },
+      }),
+    }),
+  )
+  async updateData(
+    @Param('id') id: number,
+    @Param('cateID') cateID: number,
+    @UploadedFile() image: Express.Multer.File,
+    @Body() data: UpdateProductDTO,
+  ): Promise<UpdateResult> {
+    const currentData = await this.productService.getByID(id);
+    let fileName = currentData.image;
+    if (image) {
+      fileName = image.filename;
+    }
+    data.image = fileName;
+    return this.productService.update(id, cateID, data);
+  }
+
+  @Delete(':id')
+  deleteProd(@Param('id') id: number) {
+    return this.productService.deleteData(id);
   }
 }

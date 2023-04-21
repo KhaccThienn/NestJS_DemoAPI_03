@@ -22,10 +22,16 @@ export class CategoryService {
     });
   }
 
-  async getProdByCate(cateId: number): Promise<Category[]> {
-    return await this.cateRepository.find({
+  async getProdByCate(cateId: number): Promise<Category> {
+    return await this.cateRepository.findOne({
       relations: ['prods'],
       where: [{ id: cateId }],
+    });
+  }
+
+  async checkIsUnique(value: any): Promise<Category> {
+    return await this.cateRepository.findOne({
+      where: [{ name: value }],
     });
   }
 

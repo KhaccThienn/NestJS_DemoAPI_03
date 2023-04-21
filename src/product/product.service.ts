@@ -1,6 +1,7 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, UpdateResult, DeleteResult } from 'typeorm';
+import { Repository, UpdateResult, DeleteResult, HostAddress } from 'typeorm';
+import { unlinkSync } from 'fs';
 import { Product } from './entity/product.entity';
 import { CreateProductDTO } from './dto/create-product.dto';
 import Category from 'src/category/entity/category.entity';
@@ -8,6 +9,8 @@ import { UpdateProductDTO } from './dto/update-product.dto';
 
 @Injectable()
 export class ProductService {
+  private logger = new Logger();
+
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
@@ -17,17 +20,23 @@ export class ProductService {
   ) {}
 
   // Prepare for the limit, paginator and filter data services
-  async queryBuilder(query: string) {
+  queryBuilder(query: string) {
     return this.productRepository.createQueryBuilder(query);
   }
 
-  async getAllProd(): Promise<Product[]> {
+  getAllProd(): Promise<Product[]> {
     return this.productRepository.find({
       relations: ['cates'],
     });
   }
 
-  async getDetail(id: number, _slug = ''): Promise<Product[]> {
+  getByID(id: number): Promise<Product> {
+    return this.productRepository.findOne({
+      where: [{ id: id }],
+    });
+  }
+
+  getDetail(id: number, _slug = ''): Promise<Product[]> {
     return this.productRepository.find({
       relations: ['cate'],
       where: [{ id: id }],
@@ -64,6 +73,12 @@ export class ProductService {
   }
 
   async deleteData(id: number): Promise<DeleteResult> {
+    const prod = await this.productRepository.find({
+      where: [{ id: id }],
+    });
+    const filePath = prod[0].image;
+    this.logger.log(filePath);
+    unlinkSync('./src/public/uploads/' + filePath);
     return this.productRepository.delete(id);
   }
 }
