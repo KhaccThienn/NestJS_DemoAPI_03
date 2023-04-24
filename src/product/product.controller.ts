@@ -11,21 +11,20 @@ import {
   UseInterceptors,
   Logger,
   ParseFilePipe,
-  MaxFileSizeValidator,
-  FileTypeValidator,
-  ParseFilePipeBuilder,
   HttpException,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { Product } from './entity/product.entity';
 import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { MulterError, diskStorage } from 'multer';
+import { diskStorage } from 'multer';
 import { CreateProductDTO } from './dto/create-product.dto';
 import { UpdateProductDTO } from './dto/update-product.dto';
 import { UpdateResult } from 'typeorm';
-
+import { AuthGuard } from '@nestjs/passport';
+@UseGuards(AuthGuard('authh'))
 @Controller('api/product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}

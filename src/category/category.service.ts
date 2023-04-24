@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Category from './entity/category.entity';
 import { DataSource, Repository, UpdateResult, DeleteResult } from 'typeorm';
@@ -36,6 +36,13 @@ export class CategoryService {
   }
 
   async create(newCate: CreateCategoryDTO): Promise<Category> {
+    const exts_cate = this.checkIsUnique(newCate.name);
+    if (exts_cate) {
+      throw new HttpException(
+        `Create category ${newCate.name} already exists`,
+        HttpStatus.BAD_REQUEST,
+      );
+    }
     return this.cateRepository.save(newCate);
   }
 
