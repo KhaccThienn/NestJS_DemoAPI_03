@@ -1,10 +1,11 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Category from './entity/category.entity';
 import { DataSource, Repository, UpdateResult, DeleteResult } from 'typeorm';
 import CreateCategoryDTO from './dto/create-category.dto';
 import UpdateCategoryDTO from './dto/update-category.dto';
 import { Product } from './../product/entity/product.entity';
+import { unlinkSync } from 'fs';
 
 @Injectable()
 export class CategoryService {
@@ -15,6 +16,7 @@ export class CategoryService {
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
   ) {}
+  private logger = new Logger();
 
   async getAll(): Promise<Category[]> {
     return await this.cateRepository.find({
@@ -52,7 +54,12 @@ export class CategoryService {
 
   async deleteCate(id: number): Promise<DeleteResult> {
     const cate = await this.getProdByCate(id);
-    cate[0].prods.forEach((e) => {
+    console.log(cate);
+
+    cate.prods.forEach((e) => {
+      const filePath = e.image;
+      this.logger.log(filePath);
+      unlinkSync('./src/public/uploads/' + filePath);
       this.productRepository.remove(e);
     });
 

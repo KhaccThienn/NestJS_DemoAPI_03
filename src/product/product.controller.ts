@@ -32,7 +32,7 @@ export class ProductController {
 
   @Get()
   async getAll(@Req() req: Request): Promise<Product[]> {
-    const builder = await this.productService
+    const builder = this.productService
       .queryBuilder('product')
       .innerJoinAndSelect('product.cate', 'cate');
     // this.logger.log(builder.getQuery());
@@ -45,7 +45,10 @@ export class ProductController {
     if (req.query.sort) {
       const sort = req.query.sort;
       const sortArr = sort.toString().split('-');
-      builder.orderBy(sortArr[0], sortArr[1] == 'ASC' ? 'ASC' : 'DESC');
+      builder.orderBy(
+        `product.${sortArr[0]}`,
+        sortArr[1] == 'ASC' ? 'ASC' : 'DESC',
+      );
       // this.logger.log(builder.getQuery());
     }
 
@@ -54,7 +57,7 @@ export class ProductController {
 
     builder.offset((page - 1) * perPage).limit(perPage);
 
-    // this.logger.log(builder.getQuery());
+    this.logger.log(builder.getQuery());
     return await builder.getMany();
   }
 
