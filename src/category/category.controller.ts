@@ -16,7 +16,8 @@ import UpdateCategoryDTO from './dto/update-category.dto';
 import { UpdateResult, DeleteResult } from 'typeorm';
 import { plainToClass } from 'class-transformer';
 import { AuthGuard } from '@nestjs/passport';
-@UseGuards(AuthGuard('authh'))
+import { Product } from 'src/product/entity/product.entity';
+// @UseGuards(AuthGuard('authh'))
 @Controller('api/category')
 export class CategoryController {
   constructor(private readonly categoryService: CategoryService) {}
@@ -27,10 +28,10 @@ export class CategoryController {
   }
 
   @Get(':id')
-  public getProdByCate(
+  async getProdByCate(
     @Param('id', ParseIntPipe) id: number,
-  ): Promise<Category> {
-    return this.categoryService.getProdByCate(id);
+  ): Promise<Product[]> {
+    return await this.categoryService.getProdByCate(id);
   }
 
   @Post()

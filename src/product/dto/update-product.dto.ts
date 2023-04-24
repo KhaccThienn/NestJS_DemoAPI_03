@@ -5,14 +5,10 @@ export class UpdateProductDTO {
   @MinLength(3)
   name: string;
 
-  @IsNumber()
   status: number;
 
-  @IsNumber()
-  @Min(1)
   price: number;
 
-  @Min(0)
   sale_price: number;
 
   image: string;

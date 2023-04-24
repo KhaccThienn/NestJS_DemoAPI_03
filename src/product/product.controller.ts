@@ -24,7 +24,7 @@ import { CreateProductDTO } from './dto/create-product.dto';
 import { UpdateProductDTO } from './dto/update-product.dto';
 import { UpdateResult } from 'typeorm';
 import { AuthGuard } from '@nestjs/passport';
-@UseGuards(AuthGuard('authh'))
+// @UseGuards(AuthGuard('authh'))
 @Controller('api/product')
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
@@ -79,7 +79,12 @@ export class ProductController {
         filename(req, file, callback) {
           const dateNow = Date.now();
           const fileName = dateNow + file.originalname;
-          callback(null, fileName);
+          const replaceFileName = fileName.replace(' ', '_');
+          const fullPath =
+            'http://' + req.get('host') + '/uploads/' + replaceFileName;
+          console.log(fullPath);
+
+          callback(null, fullPath);
         },
       }),
     }),
