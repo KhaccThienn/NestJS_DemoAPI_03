@@ -30,6 +30,10 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
   private logger = new Logger();
 
+  isNum = (data: any) => {
+    return typeof data == 'number';
+  };
+
   @Get()
   async getAll(@Req() req: Request): Promise<Product[]> {
     const builder = this.productService
@@ -52,7 +56,7 @@ export class ProductController {
       this.logger.log(builder.getQuery());
     }
 
-    if (req.query.cate) {
+    if (req.query.cate || this.isNum(req.query.cate)) {
       const cateID = req.query.cate;
       builder.andWhere(`cate.id = ${cateID}`);
       this.logger.log(builder.getQuery());
@@ -60,13 +64,15 @@ export class ProductController {
 
     if (req.query.price) {
       const priceSort = req.query.price;
-      const priceArr = priceSort.toString().split(',');
-      builder.where(`product.price BETWEEN ${priceArr[0]} AND ${priceArr[1]}`);
+      const priceArr = priceSort.toString().split('-');
+      const start = priceArr[0] ? priceArr[0] : 0;
+      const end = priceArr[1] ? priceArr[1] : 100000000;
+      builder.where(`product.price BETWEEN ${start} AND ${end}`);
       this.logger.log(builder.getQuery());
     }
 
-    const page: number = parseInt(req.query._page as any) || 1;
-    const perPage: number = parseInt(req.query._limit as any) || 8;
+    const page: number = parseInt(req.query.page as any) || 1;
+    const perPage: number = parseInt(req.query.limit as any) || 8;
 
     builder.offset((page - 1) * perPage).limit(perPage);
 
