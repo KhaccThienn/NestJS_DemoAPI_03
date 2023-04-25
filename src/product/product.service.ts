@@ -36,6 +36,16 @@ export class ProductService {
     });
   }
 
+  getByCateID(cateID: number): Promise<Product[]> {
+    const cate = this.categoryRepository.findOne({
+      where: [{ id: cateID }],
+    });
+    return this.productRepository.find({
+      relations: ['cates'],
+      where: [{ cate: cate[0] }],
+    });
+  }
+
   getDetail(id: number, _slug = ''): Promise<Product[]> {
     return this.productRepository.find({
       relations: ['cate'],

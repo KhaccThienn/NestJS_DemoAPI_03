@@ -38,8 +38,8 @@ export class ProductController {
     // this.logger.log(builder.getQuery());
 
     if (req.query.s) {
-      builder.where(`product.name LIKE '%${req.query.s}%'`);
-      // this.logger.log(builder.getQuery());
+      builder.andWhere(`product.name LIKE '%${req.query.s}%'`);
+      this.logger.log(builder.getQuery());
     }
 
     if (req.query.sort) {
@@ -49,7 +49,20 @@ export class ProductController {
         `product.${sortArr[0]}`,
         sortArr[1] == 'ASC' ? 'ASC' : 'DESC',
       );
-      // this.logger.log(builder.getQuery());
+      this.logger.log(builder.getQuery());
+    }
+
+    if (req.query.cate) {
+      const cateID = req.query.cate;
+      builder.andWhere(`cate.id = ${cateID}`);
+      this.logger.log(builder.getQuery());
+    }
+
+    if (req.query.price) {
+      const priceSort = req.query.price;
+      const priceArr = priceSort.toString().split(',');
+      builder.where(`product.price BETWEEN ${priceArr[0]} AND ${priceArr[1]}`);
+      this.logger.log(builder.getQuery());
     }
 
     const page: number = parseInt(req.query._page as any) || 1;
@@ -57,7 +70,7 @@ export class ProductController {
 
     builder.offset((page - 1) * perPage).limit(perPage);
 
-    this.logger.log(builder.getQuery());
+    // this.logger.log(builder.getQuery());
     return await builder.getMany();
   }
 
