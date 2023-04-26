@@ -9,6 +9,6 @@ async function bootstrap() {
 
   app.useStaticAssets('./src/public');
   app.useGlobalPipes(new ValidationPipe());
-  await app.listen(8888);
+  await app.listen(8000);
 }
 bootstrap();

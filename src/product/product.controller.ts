@@ -67,9 +67,16 @@ export class ProductController {
       const priceArr = priceSort.toString().split('-');
       const start = priceArr[0] ? priceArr[0] : 0;
       const end = priceArr[1] ? priceArr[1] : 100000000;
-      builder.where(`product.price BETWEEN ${start} AND ${end}`);
+      builder.andWhere(`product.price BETWEEN ${start} AND ${end}`);
       this.logger.log(builder.getQuery());
     }
+
+    // if (req.query.minPrice || req.query.maxPrice) {
+    //   const minPrice = req.query.minPrice ? req.query.minPrice : 0;
+    //   const maxPrice = req.query.maxPrice ? req.query.maxPrice : 100000000;
+    //   builder.where(`product.price BETWEEN ${minPrice} AND ${maxPrice}`);
+    //   this.logger.log(builder.getQuery());
+    // }
 
     const page: number = parseInt(req.query.page as any) || 1;
     const perPage: number = parseInt(req.query.limit as any) || 8;

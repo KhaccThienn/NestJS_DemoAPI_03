@@ -23,7 +23,7 @@ import { JWTStrategy } from './auth/strategy';
       database: 'sotatek_demonest_03',
       autoLoadEntities: false,
       entities: [Category, Product, User],
-      synchronize: true,
+      synchronize: false,
     }),
     ConfigModule.forRoot({
       envFilePath: '.env',
